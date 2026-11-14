@@ -232,14 +232,14 @@ for (const enabled of [true, false]) {
 	});
 }
 
-test("account creation still enforces admin authorization and the Team license", async (t) => {
+test("account creation still enforces admin authorization but needs no license", async (t) => {
 	const f = await fixture(t);
 	assert.equal((await f.post("api", {}, "invalid-test-key")).status, 401);
 	assert.equal((await f.post("dashboard", {}, "invalid-test-session")).status, 403);
-	f.database.db.exec("UPDATE license_settings SET state = 'inactive'");
-	assert.equal((await f.post("api")).status, 403);
-	assert.equal((await f.post("dashboard")).status, 403);
 	assert.equal(f.calls.length, 0);
+	f.database.db.exec("UPDATE license_settings SET state = 'inactive'");
+	assert.equal((await f.post("api", { username: "unlicensed-one" })).status, 201);
+	assert.equal((await f.post("dashboard", { username: "unlicensed-two" })).status, 201);
 });
 
 test("a Pro license creates accounts only while seats remain; Team and unlimited Pro have no limit", async (t) => {
